@@ -1,2 +1,2 @@
-# tf-attentive-neural-process
-Tensorflow implementation of Attentive Neural Process
+# tf-neural-process
+Tensorflow implementation of Neural Process family
