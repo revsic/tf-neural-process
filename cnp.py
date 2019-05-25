@@ -40,7 +40,7 @@ class ConditionalNP:
         context = self.encoder(*context)
         dist, mu, sigma = self.decoder(context, query, n_target)
 
-        if target_y is not None:
+        if target is not None:
             log_p = dist.log_prob(target)
         else:
             log_p = None
