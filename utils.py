@@ -11,17 +11,6 @@ def dense_sequential(output_sizes, activation=tf.nn.relu):
     return model
 
 
-def batch_mlp(input_tensor, model):
-    batch_size, _, filter_size = input_tensor.shape.as_list()
-    output = tf.reshape(input_tensor, (-1, filter_size))
-
-    output = model(output)
-    output_size = output.shape[-1].value
-
-    output = tf.reshape(output, (batch_size, -1, output_size))
-    return output
-
-
 def plot_func(x, y, cx, cy, pred, var, batch=0, axis=0):
     plt.plot(x[batch], pred[batch], 'b', linewidth=2)
     plt.plot(x[batch], y[batch], 'k:', linewidth=2)
