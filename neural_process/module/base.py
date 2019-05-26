@@ -1,11 +1,11 @@
 import tensorflow as tf
 import tensorflow_probability as tfp
 
-import utils
+from neural_process.module.tfutils import dense_sequential
 
 class Encoder:
     def __init__(self, output_sizes, attention=None, keepdims=False):
-        self.model = utils.dense_sequential(output_sizes)
+        self.model = dense_sequential(output_sizes)
         self.attention = attention
         self.keepdims = keepdims
 
@@ -25,7 +25,7 @@ class Encoder:
 
 class Decoder:
     def __init__(self, output_sizes):
-        self.model = utils.dense_sequential(output_sizes)
+        self.model = dense_sequential(output_sizes)
     
     def __call__(self, context, tx):
         input_tensor = tf.concat([context, tx], axis=-1)
