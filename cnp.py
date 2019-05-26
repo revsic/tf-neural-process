@@ -9,7 +9,7 @@ class Encoder:
     
     def __call__(self, context_x, context_y):
         input_tensor = tf.concat([context_x, context_y], axis=-1)
-        context = utils.batch_mlp(input_tensor, self.model)
+        context = self.model(input_tensor)
         context = tf.reduce_mean(context, axis=1)
         return context
 
@@ -22,7 +22,7 @@ class Decoder:
         context = tf.tile(tf.expand_dims(context, axis=1),
                           [1, n_target, 1])
         input_tensor = tf.concat([context, target_x], axis=-1)
-        hidden = utils.batch_mlp(input_tensor, self.model)
+        hidden = self.model(input_tensor)
         
         mu, log_sigma = tf.split(hidden, 2, axis=-1)
         sigma = tf.exp(log_sigma)
