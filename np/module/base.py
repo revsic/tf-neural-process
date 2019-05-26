@@ -4,19 +4,22 @@ import tensorflow_probability as tfp
 import utils
 
 class Encoder:
-    def __init__(self, output_sizes, attention=None):
+    def __init__(self, output_sizes, attention=None, keepdims=False):
         self.model = utils.dense_sequential(output_sizes)
         self.attention = attention
+        self.keepdims = keepdims
 
-    def __call__(self, cx, cy, tx=None):
-        hidden = self.model(tf.concat([cx, cy], axis=-1))
+    def __call__(self, rep, key=None, query=None):
+        if isinstance(rep, (tuple, list)):
+            rep = tf.concat(rep, axis=-1)
+
+        hidden = self.model(rep)
         if self.attention is not None:
-            if tx is None:
-                tx = cx
+            hidden = self.attention(query=query, key=key, value=hidden)
+    
+        if not self.keepdims:
+            hidden = tf.reduce_mean(hidden, axis=1)
 
-            hidden = self.attention(query=cx, key=tx, value=hidden)
-
-        hidden = tf.reduce_mean(hidden, axis=1)
         return hidden
 
 
