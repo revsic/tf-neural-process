@@ -6,14 +6,14 @@ import utils
 class LatentEncoder:
     def __init__(self, output_sizes, n_latent):
         self.model = utils.dense_sequential(output_sizes)
-        self.penultimate = tf.keras.layers.Dense((output_sizes[-1] + n_latent) / 2)
+        self.penultimate = tf.keras.layers.Dense((output_sizes[-1] + n_latent) // 2)
         self.dmu = tf.keras.layers.Dense(n_latent)
         self.dsigma = tf.keras.layers.Dense(n_latent)
-    
+
     def __call__(self, x, y):
         encoder_input = tf.concat([x, y], axis=-1)
-        hidden = utils.batch_mlp(encoder_input, self.model)
-        hidden = tf.reduce_mean(hidden, axis=-1)
+        hidden = self.model(encoder_input)
+        hidden = tf.reduce_mean(hidden, axis=1)
 
         hidden = tf.nn.relu(self.penultimate(hidden))
 
@@ -31,7 +31,7 @@ class DeterministicEncoder:
     
     def __call__(self, cx, cy, tx):
         encoder_input = tf.concat([cx, cy], axis=-1)
-        hidden = utils.batch_mlp(encoder_input, self.model)
+        hidden = self.model(encoder_input)
         hidden = self.attention(query=cx, key=tx, value=hidden)
         return hidden
 
@@ -42,7 +42,7 @@ class Decoder:
     
     def __call__(self, context, tx):
         hidden = tf.concat([context, tx], axis=-1)
-        hidden = utils.batch_mlp(hidden, self.model)
+        hidden = self.model(hidden)
 
         mu, log_sigma = tf.split(hidden, 2, axis=-1)
         sigma = 0.1 + 0.9 * tf.nn.softplus(log_sigma)
@@ -79,7 +79,7 @@ class AttentiveNP:
 
         if self.use_deterministic_path:
             det_rep = self.deterministic_encoder(*context, query)
-            context = tf.concat([det_rep, latent_rep])
+            context = tf.concat([det_rep, latent_rep], axis=-1)
         else:
             context = latent_rep
 
