@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
-from module.base import Encoder, Decoder, GaussianProb
+from neural_process.module.base import Encoder, Decoder, GaussianProb
 
 class NeuralProcess:
     def __init__(self,
@@ -27,7 +27,7 @@ class NeuralProcess:
         context = tf.concat([latent, context], axis=-1)
         context = tf.tile(tf.expand_dims(context, 1),
                           [1, tf.shape(query)[1], 1])
-        
+
         rep = self.decoder(context, query)
         dist, mu, sigma = self.normal_dist(rep)
 

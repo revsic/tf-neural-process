@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from module.base import Encoder, Decoder, GaussianProb
+from neural_process.module.base import Encoder, Decoder, GaussianProb
 
 class ConditionalNP:
     def __init__(self, enc_output_sizes, dec_output_sizes):
