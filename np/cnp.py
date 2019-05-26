@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from model import Encoder, Decoder, GaussianProb
+from module.base import Encoder, Decoder, GaussianProb
 
 class ConditionalNP:
     def __init__(self, enc_output_sizes, dec_output_sizes):
@@ -9,7 +9,7 @@ class ConditionalNP:
         self.normal_dist = GaussianProb(dec_output_sizes[-1], multivariate=True)
 
     def __call__(self, context, query):
-        context = self.encoder(*context)
+        context = self.encoder(context)
 
         n_query = tf.shape(query)[1]
         context = tf.tile(tf.expand_dims(context, 1),
