@@ -1,48 +1,26 @@
 import tensorflow as tf
-import tensorflow_probability as tfp
 
-import utils
-
-class Encoder:
-    def __init__(self, output_sizes):
-        self.model = utils.dense_sequential(output_sizes)
-    
-    def __call__(self, context_x, context_y):
-        input_tensor = tf.concat([context_x, context_y], axis=-1)
-        context = self.model(input_tensor)
-        context = tf.reduce_mean(context, axis=1)
-        return context
-
-
-class Decoder:
-    def __init__(self, output_sizes):
-        self.model = utils.dense_sequential(output_sizes)
-    
-    def __call__(self, context, target_x, n_target):
-        context = tf.tile(tf.expand_dims(context, axis=1),
-                          [1, n_target, 1])
-        input_tensor = tf.concat([context, target_x], axis=-1)
-        hidden = self.model(input_tensor)
-        
-        mu, log_sigma = tf.split(hidden, 2, axis=-1)
-        sigma = tf.exp(log_sigma)
-
-        dist = tfp.distributions.MultivariateNormalDiag(loc=mu, scale_diag=sigma)
-        return dist, mu, sigma
-
+from model import Encoder, Decoder, GaussianProb
 
 class ConditionalNP:
     def __init__(self, enc_output_sizes, dec_output_sizes):
         self.encoder = Encoder(enc_output_sizes)
-        self.decoder = Decoder(dec_output_sizes)
+        self.decoder = Decoder(dec_output_sizes[:-1])
+        self.normal_dist = GaussianProb(dec_output_sizes[-1], multivariate=True)
 
-    def __call__(self, context, query, n_target, target=None):
+    def __call__(self, context, query):
         context = self.encoder(*context)
-        dist, mu, sigma = self.decoder(context, query, n_target)
 
-        if target is not None:
-            log_p = dist.log_prob(target)
-        else:
-            log_p = None
-        
-        return log_p, mu, sigma
+        n_query = tf.shape(query)[1]
+        context = tf.tile(tf.expand_dims(context, 1),
+                          [1, n_query, 1])
+
+        rep = self.decoder(context, query)
+        dist, mu, sigma = self.normal_dist(rep)
+
+        return dist, mu, sigma
+
+    def loss(self, context, query, target):
+        dist, _, _ = self(context, query)
+        log_prob = dist.log_prob(target)
+        return -tf.reduce_mean(log_prob)
