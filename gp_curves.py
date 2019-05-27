@@ -7,6 +7,24 @@ SPRDataset = collections.namedtuple(
     'SPRDataset', ('context', 'query', 'target', 'n_context', 'n_target'))
 
 class GPCurvesGenerator:
+    """N-dimensional curve generator by Gaussian Process.
+    Attributes:
+        batch_size: size of batch, number of curves
+        max_size: maximum number of generated coordinates
+        x_start: start point of x-domain
+        x_end: end point of x-domain
+        x_dim: dimension of x, number of features in x
+        y_dim: dimension of y, number of features in y
+        l1_scale: denominator in exponnential term of rbf kernel
+        sigma_scale: coefficient of exponential term in rbf kernel
+        random_kernel_parameters: randomize kernel parameter
+            if true, l1 and sigma value is sampled from uniform dist between 0.1 ~ l1_scale (or sigma_scale)
+            if false, l1 and sigma value is diagonal matrix of l1_scale or sigma_scale value
+        testing: enable test mode.
+            if true, x is np.linspace(x_start, x_end, interval)
+            if false, x is sampled from uniform distribution
+        test_size: size of tensor on test mode. 
+    """
     def __init__(self,
                  batch_size,
                  max_size,
@@ -51,6 +69,15 @@ class GPCurvesGenerator:
         return kernel
     
     def generate(self):
+        """Generate GP curves
+        Returns:
+            SPRDataset
+                context: (tf.Tensor, tf.Tensor), x-context, y-context, shape=[batch_size, n_context, x_dim (or y_dim)]
+                query: tf.Tensor, x-input, shape=[batch_size, n_total, x_dim]
+                target: tf.Tensor, y-output, shape=[batch_size, n_total, y_dim]
+                n_context: tf.Tensor, number of context
+                n_target: tf.Tensor, number of target
+        """
         n_context = tf.random_uniform([], 3, self.max_size, dtype=tf.int32)
 
         if self.testing:
@@ -104,6 +131,17 @@ class GPCurvesGenerator:
 
 
 def plot_func(x, y, cx, cy, pred, var, batch=0, axis=0):
+    """Plot gp function
+    Args:
+        x: domain of function
+        y: function value
+        cx: context point, x
+        cy: context point, y
+        pred: predicted mean
+        var: predicted variance
+        batch: index of batch to plot
+        axis: index of axis to plot
+    """
     plt.plot(x[batch], pred[batch], 'b', linewidth=2)
     plt.plot(x[batch], y[batch], 'k:', linewidth=2)
     plt.plot(cx[batch], cy[batch], 'ko', markersize=10)
