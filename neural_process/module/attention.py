@@ -73,24 +73,30 @@ class MultiheadAttention:
 
 
 class Attention:
-    def __init__(self, rep, attention_type, output_sizes=None, n_head=8):
-        self.rep = rep
+    """Wrapper for attention mechanisms
+    Attributes:
+        attention_type: str, type of attention, [uniform, laplace, dotprod, multihead]
+        proj: List[int], number of hidden units for projection layer
+            if None, projection is not applied
+        dk: optional, Callable[[tf.Tensor], tf.Tensor], dense sequential for key projection
+        dq: optional, Callable[[tf.Tensor], tf.Tensor], dense sequential for query projection
+        multihead_attention, optional, MultiheadAttention, object for multihead attention
+    """
+    def __init__(self, attention_type, proj=None, n_head=8):
         self.attention_type = attention_type
-
-        if self.rep not in ['identity', 'mlp']:
-            raise ValueError("'rep' should be one of ['identity', 'mlp']")
         if self.attention_type not in ['uniform', 'laplace', 'dotprod', 'multihead']:
             raise ValueError("'attention_type should be one of ['uniform', 'laplace', 'dotprod', 'multihead']")
 
-        if self.rep == 'mlp':
-            self.dk = dense_sequential(output_sizes)
-            self.dq = dense_sequential(output_sizes)
+        self.proj = proj
+        if self.proj is not None:
+            self.dk = dense_sequential(self.proj)
+            self.dq = dense_sequential(self.proj)
 
         if self.attention_type == 'multihead':
             self.multihead_attention = MultiheadAttention(n_head)
 
     def __call__(self, query, key, value):
-        if self.rep == 'mlp':
+        if self.proj is not None:
             key = self.dk(key)
             query = self.dq(query)
 
