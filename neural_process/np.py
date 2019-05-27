@@ -5,10 +5,24 @@ import tensorflow_probability as tfp
 from neural_process.module.base import Encoder, Decoder, GaussianProb
 
 class NeuralProcess:
+    """Neural Process
+    Attributes:
+        z_encoder: Encoder, encoder for latent representation
+        z_prob: GaussianProb, latent representation to probability distribution
+        encoder: Encoder, context encoder
+        decoder: Decoder, decoder for context and latent variable
+        normal_dist: GaussianProb, converter for decoded context to probability distribution
+    """
     def __init__(self,
                  z_output_sizes,
                  enc_output_sizes,
                  dec_output_sizes):
+        """Initializer
+        Args:
+            z_output_sizes: List[int], number of hidden units for latent representation encoder
+            enc_output_sizes: List[int], number of hidden units for context encoder
+            dec_output_sizes: List[int], number of hidden units for decoder
+        """
         self.z_encoder = Encoder(z_output_sizes[:-1])
         self.z_prob = GaussianProb(z_output_sizes[-1],
                                    proj=np.mean(z_output_sizes[-2:]))
@@ -44,5 +58,6 @@ class NeuralProcess:
         kl = tfp.distributions.kl_divergence(prior, posterior)
         kl = tf.reduce_sum(kl)
 
+        # maximize variational lower bound
         loss = -log_prob + kl
         return loss
